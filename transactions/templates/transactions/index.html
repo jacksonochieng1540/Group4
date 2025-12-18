@@ -3,208 +3,682 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Distributed Transactions Demo</title>
+    <title>Distributed Transactions - CAT 1 Demo</title>
     
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
     <style>
-        body { background: #f8f9fa; padding: 20px; }
-        .card { margin-bottom: 20px; }
-        .node-active { background-color: #d4edda; border-left: 4px solid #28a745; padding: 10px; margin-bottom: 5px; }
-        .node-inactive { background-color: #f8d7da; border-left: 4px solid #dc3545; padding: 10px; margin-bottom: 5px; }
-        .log-item { padding: 10px; margin-bottom: 5px; border-radius: 5px; background: #f8f9fa; }
-        .log-success { background-color: #d4edda; border-left: 4px solid #28a745; }
-        .log-error { background-color: #f8d7da; border-left: 4px solid #dc3545; }
-        .log-warning { background-color: #fff3cd; border-left: 4px solid #ffc107; }
-        .balance-update { animation: pulse 0.5s; }
+        :root {
+            --primary-color: #4e54c8;
+            --secondary-color: #8f94fb;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .card {
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            border: none;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        
+        .card-header {
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
+            padding: 15px 20px;
+            border-bottom: none;
+        }
+        
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        
+        .node-active {
+            background-color: rgba(40, 167, 69, 0.15);
+            border-left: 4px solid var(--success-color);
+            padding: 12px;
+            margin-bottom: 8px;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .node-inactive {
+            background-color: rgba(220, 53, 69, 0.15);
+            border-left: 4px solid var(--danger-color);
+            padding: 12px;
+            margin-bottom: 8px;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .log-item {
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            border-left: 4px solid var(--primary-color);
+            background-color: rgba(78, 84, 200, 0.05);
+            border-radius: 0 8px 8px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            word-break: break-word;
+            animation: fadeIn 0.3s;
+        }
+        
+        .log-success {
+            border-left-color: var(--success-color);
+            background-color: rgba(40, 167, 69, 0.05);
+        }
+        
+        .log-error {
+            border-left-color: var(--danger-color);
+            background-color: rgba(220, 53, 69, 0.05);
+        }
+        
+        .log-warning {
+            border-left-color: var(--warning-color);
+            background-color: rgba(255, 193, 7, 0.05);
+        }
+        
+        .log-info {
+            border-left-color: var(--info-color);
+            background-color: rgba(23, 162, 184, 0.05);
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .transaction-form {
+            background-color: #f8f9fa;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+        
+        .btn-transaction {
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            border: none;
+            padding: 12px 30px;
+            font-weight: 600;
+            color: white;
+            transition: all 0.3s;
+            border-radius: 8px;
+        }
+        
+        .btn-transaction:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(78, 84, 200, 0.3);
+        }
+        
+        .balance-card {
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+        
+        .balance-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        
+        .balance-update {
+            animation: pulse 0.5s ease-in-out;
+        }
+        
         @keyframes pulse {
             0% { transform: scale(1); }
             50% { transform: scale(1.05); }
             100% { transform: scale(1); }
         }
+        
+        .stat-card {
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            background: white;
+            margin-bottom: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        
+        .demo-card {
+            transition: all 0.3s;
+            cursor: pointer;
+            height: 100%;
+        }
+        
+        .demo-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+        
+        .progress {
+            height: 8px;
+            margin-top: 10px;
+            border-radius: 4px;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 300px;
+            max-width: 400px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .highlight {
+            background: linear-gradient(120deg, rgba(255,255,200,0.3) 0%, rgba(255,255,200,0) 100%);
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="card">
-            <div class="card-header bg-primary text-white">
-                <h4 class="mb-0">Fault-Tolerant Distributed Transactions</h4>
-                <small>ICS 2403 - Distributed Computing CAT 1 Demo</small>
-            </div>
-            
-            <div class="card-body">
-                <!-- Node Status -->
-                <div class="row mb-4">
-                    <div class="col-md-8">
-                        <h5>Node Status</h5>
-                        <div id="node-status-container">
-                            <div class="alert alert-info">
-                                <i class="fas fa-sync fa-spin me-2"></i>
-                                Checking node status...
+    <div class="container-fluid">
+        <div class="row justify-content-center">
+            <div class="col-xxl-10 col-xl-12">
+                <!-- Main Card -->
+                <div class="card">
+                    <!-- Header -->
+                    <div class="card-header">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <h1 class="h3 mb-1">
+                                    <i class="fas fa-network-wired me-2"></i>
+                                    Fault-Tolerant Distributed Transactions
+                                </h1>
+                                <p class="mb-0 opacity-90">ICS 2403 - CAT 1: Two-Phase Commit with Failure Recovery & Concurrency</p>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <button class="btn btn-sm btn-light" id="refreshAll">
+                                    <i class="fas fa-sync-alt me-1"></i> Refresh All
+                                </button>
+                                <button class="btn btn-sm btn-outline-light" id="resetSystem">
+                                    <i class="fas fa-undo me-1"></i> Reset System
+                                </button>
                             </div>
                         </div>
                     </div>
                     
-                    <div class="col-md-4">
-                        <h5>Statistics</h5>
-                        <div class="d-flex justify-content-between mb-2">
-                            <span>Total Transactions:</span>
-                            <span class="badge bg-primary" id="tx-count">0</span>
-                        </div>
-                        <div class="d-flex justify-content-between mb-2">
-                            <span>Successful:</span>
-                            <span class="badge bg-success" id="success-count">0</span>
-                        </div>
-                        <div class="d-flex justify-content-between">
-                            <span>Failed:</span>
-                            <span class="badge bg-danger" id="fail-count">0</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Balances -->
-                <div class="row mb-4">
-                    <div class="col-12">
-                        <h5>Account Balances</h5>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <div class="card">
-                                    <div class="card-body">
-                                        <h6>Node 5001 (Sender)</h6>
-                                        <h3 class="text-primary" id="balance5001">$1000</h3>
-                                        <span class="badge bg-secondary" id="badge5001">Initial</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <div class="card">
-                                    <div class="card-body">
-                                        <h6>Node 5002 (Receiver)</h6>
-                                        <h3 class="text-success" id="balance5002">$1000</h3>
-                                        <span class="badge bg-secondary" id="badge5002">Initial</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="text-end">
-                            <button class="btn btn-sm btn-outline-secondary" id="refreshBalances">
-                                <i class="fas fa-sync me-1"></i> Refresh Balances
-                            </button>
-                            <button class="btn btn-sm btn-outline-warning" id="resetBalances">
-                                <i class="fas fa-undo me-1"></i> Reset to $1000
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Transaction Form -->
-                <div class="card mb-4">
                     <div class="card-body">
-                        <h5>Execute Transaction</h5>
-                        <form method="post" id="transactionForm">
-                            {% csrf_token %}
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label>Transfer Amount</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text">$</span>
-                                        <input type="number" class="form-control" name="amount" value="100" min="1" max="1000" required>
+                        <!-- System Overview -->
+                        <div class="row mb-4">
+                            <div class="col-md-8">
+                                <h5 class="mb-3">
+                                    <i class="fas fa-server me-2"></i>
+                                    Distributed System Status
+                                </h5>
+                                <div id="node-status-container" class="mb-3">
+                                    <div class="alert alert-info mb-0">
+                                        <i class="fas fa-sync fa-spin me-2"></i>
+                                        Checking distributed node status...
                                     </div>
                                 </div>
-                                <div class="col-md-6">
-                                    <label>&nbsp;</label>
-                                    <button type="submit" class="btn btn-primary w-100" id="submitBtn">
-                                        <i class="fas fa-play me-2"></i> Start Transaction
+                                
+                                <!-- Statistics -->
+                                <div class="row g-2">
+                                    <div class="col-6 col-md-3">
+                                        <div class="stat-card">
+                                            <div class="h4 mb-1 text-primary" id="stat-total">0</div>
+                                            <small class="text-muted">Total TX</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                        <div class="stat-card">
+                                            <div class="h4 mb-1 text-success" id="stat-committed">0</div>
+                                            <small class="text-muted">Committed</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                        <div class="stat-card">
+                                            <div class="h4 mb-1 text-danger" id="stat-rolled-back">0</div>
+                                            <small class="text-muted">Rolled Back</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                        <div class="stat-card">
+                                            <div class="h4 mb-1 text-info" id="stat-success-rate">0%</div>
+                                            <small class="text-muted">Success Rate</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <h5 class="mb-3">
+                                    <i class="fas fa-project-diagram me-2"></i>
+                                    System Architecture
+                                </h5>
+                                <div class="text-center">
+                                    <div class="mb-2">
+                                        <span class="badge bg-primary p-2">Client UI</span>
+                                        <div><i class="fas fa-arrow-down mt-2 text-muted"></i></div>
+                                    </div>
+                                    <div class="mb-2">
+                                        <span class="badge bg-info p-2">Coordinator<br><small>Django Server</small></span>
+                                        <div><i class="fas fa-arrow-down mt-2 text-muted"></i></div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <div class="bg-success text-white p-2 rounded mb-1">
+                                                <i class="fas fa-server"></i>
+                                                <div class="small">Node 6001</div>
+                                                <small id="node1-balance">$1000</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="bg-success text-white p-2 rounded mb-1">
+                                                <i class="fas fa-server"></i>
+                                                <div class="small">Node 6002</div>
+                                                <small id="node2-balance">$1000</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="small text-muted mt-2">
+                                        2-Phase Commit Protocol
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Live Balances -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="mb-3">
+                                    <i class="fas fa-wallet me-2"></i>
+                                    Live Account Balances
+                                </h5>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card balance-card border-primary">
+                                            <div class="card-body">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <div>
+                                                        <h6 class="mb-1">
+                                                            <i class="fas fa-arrow-up text-danger me-2"></i>
+                                                            Node 6001 (Sender)
+                                                        </h6>
+                                                        <p class="text-muted small mb-0">Debits amount on commit</p>
+                                                    </div>
+                                                    <div class="text-end">
+                                                        <h3 class="text-primary mb-0" id="balance6001">$1000</h3>
+                                                        <span class="badge bg-secondary" id="badge6001">Initial</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card balance-card border-success">
+                                            <div class="card-body">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <div>
+                                                        <h6 class="mb-1">
+                                                            <i class="fas fa-arrow-down text-success me-2"></i>
+                                                            Node 6002 (Receiver)
+                                                        </h6>
+                                                        <p class="text-muted small mb-0">Credits amount on commit</p>
+                                                    </div>
+                                                    <div class="text-end">
+                                                        <h3 class="text-success mb-0" id="balance6002">$1000</h3>
+                                                        <span class="badge bg-secondary" id="badge6002">Initial</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <button class="btn btn-sm btn-outline-secondary" id="refreshBalances">
+                                        <i class="fas fa-sync-alt me-1"></i>
+                                        Refresh Balances
+                                    </button>
+                                    <span class="mx-2 text-muted">|</span>
+                                    <span class="small">
+                                        Total System Balance: $<span id="totalBalance">2000</span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Single Transaction Form -->
+                        <div class="transaction-form">
+                            <h5 class="mb-4">
+                                <i class="fas fa-exchange-alt me-2"></i>
+                                Execute Single Transaction (2-Phase Commit)
+                            </h5>
+                            
+                            <form method="post" id="transactionForm">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="single">
+                                
+                                <div class="row g-3 align-items-end">
+                                    <div class="col-md-3">
+                                        <label for="amount" class="form-label">Transfer Amount</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">$</span>
+                                            <input type="number" 
+                                                   class="form-control" 
+                                                   id="amount" 
+                                                   name="amount" 
+                                                   value="100" 
+                                                   min="1" 
+                                                   max="2000" 
+                                                   required>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-4">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="failNode" name="fail_node" value="true">
+                                            <label class="form-check-label" for="failNode">
+                                                <i class="fas fa-bug text-danger me-1"></i>
+                                                Simulate Node Failure
+                                            </label>
+                                        </div>
+                                        <small class="text-muted">Node 6001 will fail during prepare phase</small>
+                                    </div>
+                                    
+                                    <div class="col-md-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="largeAmount" name="large_amount">
+                                            <label class="form-check-label" for="largeAmount">
+                                                <i class="fas fa-clock text-warning me-1"></i>
+                                                Simulate Timeout (>$800)
+                                            </label>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-2">
+                                        <button type="submit" class="btn btn-transaction w-100" id="submitBtn">
+                                            <i class="fas fa-play me-2"></i>
+                                            Execute TX
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Progress Bar -->
+                                <div class="mt-4 d-none" id="progressContainer">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Two-Phase Commit Progress</span>
+                                        <span id="progressText">0%</span>
+                                    </div>
+                                    <div class="progress">
+                                        <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" 
+                                             role="progressbar" style="width: 0%"></div>
+                                    </div>
+                                    <div class="text-center small text-muted mt-2">
+                                        <span id="phaseText">Initializing transaction...</span>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        
+                        <!-- Concurrency & Failure Demos -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="mb-3">
+                                    <i class="fas fa-flask me-2"></i>
+                                    Advanced Demonstrations
+                                </h5>
+                                <div class="row g-3">
+                                    <!-- Concurrent Transactions -->
+                                    <div class="col-md-4">
+                                        <div class="card demo-card border-info">
+                                            <div class="card-body text-center">
+                                                <div class="mb-3">
+                                                    <i class="fas fa-users fa-3x text-info mb-3"></i>
+                                                    <h5>Concurrent Transactions</h5>
+                                                    <p class="small text-muted">
+                                                        Test multiple transactions running simultaneously with thread locking
+                                                    </p>
+                                                </div>
+                                                <form method="post" class="concurrent-form">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="action" value="concurrent">
+                                                    <input type="hidden" name="num_tx" value="3">
+                                                    <button type="submit" class="btn btn-info w-100">
+                                                        <i class="fas fa-bolt me-2"></i>
+                                                        Run 3 Concurrent TX
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Failure Scenarios -->
+                                    <div class="col-md-4">
+                                        <div class="card demo-card border-danger">
+                                            <div class="card-body text-center">
+                                                <div class="mb-3">
+                                                    <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
+                                                    <h5>Failure Scenarios</h5>
+                                                    <p class="small text-muted">
+                                                        Demonstrate rollback on node failures, timeouts, and insufficient funds
+                                                    </p>
+                                                </div>
+                                                <form method="post" class="failure-form">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="action" value="failure_demo">
+                                                    <button type="submit" class="btn btn-danger w-100">
+                                                        <i class="fas fa-skull me-2"></i>
+                                                        Run Failure Demo
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Node Control -->
+                                    <div class="col-md-4">
+                                        <div class="card demo-card border-warning">
+                                            <div class="card-body text-center">
+                                                <div class="mb-3">
+                                                    <i class="fas fa-cogs fa-3x text-warning mb-3"></i>
+                                                    <h5>Node Control</h5>
+                                                    <p class="small text-muted">
+                                                        Manually simulate node crashes and restarts for demonstration
+                                                    </p>
+                                                </div>
+                                                <div class="row g-2">
+                                                    <div class="col-6">
+                                                        <form method="post" class="d-inline w-100">
+                                                            {% csrf_token %}
+                                                            <input type="hidden" name="action" value="crash_node">
+                                                            <input type="hidden" name="port" value="6001">
+                                                            <button type="submit" class="btn btn-outline-danger w-100">
+                                                                <i class="fas fa-power-off"></i> Crash 6001
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <form method="post" class="d-inline w-100">
+                                                            {% csrf_token %}
+                                                            <input type="hidden" name="action" value="restart_node">
+                                                            <input type="hidden" name="port" value="6001">
+                                                            <button type="submit" class="btn btn-outline-success w-100">
+                                                                <i class="fas fa-redo"></i> Restart
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                                <div class="row g-2 mt-2">
+                                                    <div class="col-6">
+                                                        <form method="post" class="d-inline w-100">
+                                                            {% csrf_token %}
+                                                            <input type="hidden" name="action" value="crash_node">
+                                                            <input type="hidden" name="port" value="6002">
+                                                            <button type="submit" class="btn btn-outline-danger w-100">
+                                                                <i class="fas fa-power-off"></i> Crash 6002
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <form method="post" class="d-inline w-100">
+                                                            {% csrf_token %}
+                                                            <input type="hidden" name="action" value="restart_node">
+                                                            <input type="hidden" name="port" value="6002">
+                                                            <button type="submit" class="btn btn-outline-success w-100">
+                                                                <i class="fas fa-redo"></i> Restart
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Transaction Log -->
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-history me-2"></i>
+                                    Transaction Execution Log
+                                    <span class="badge bg-primary ms-2" id="logCount">0</span>
+                                </h5>
+                                <div class="btn-group">
+                                    <button class="btn btn-sm btn-outline-primary active" id="filterAll">All</button>
+                                    <button class="btn btn-sm btn-outline-success" id="filterCommitted">Committed</button>
+                                    <button class="btn btn-sm btn-outline-danger" id="filterRolledBack">Rolled Back</button>
+                                    <button class="btn btn-sm btn-outline-info" id="filterConcurrent">Concurrent</button>
+                                    <button class="btn btn-sm btn-outline-secondary" id="clearLogBtn">
+                                        <i class="fas fa-trash"></i>
                                     </button>
                                 </div>
                             </div>
-                        </form>
-                        
-                        <!-- Progress Bar -->
-                        <div class="mt-3 d-none" id="progressContainer">
-                            <div class="progress">
-                                <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" 
-                                     style="width: 0%"></div>
+                            
+                            <div id="transactionLog" style="max-height: 500px; overflow-y: auto; padding: 15px; background: rgba(0,0,0,0.02); border-radius: 10px;">
+                                {% for log in logs %}
+                                    <div class="log-item">
+                                        <i class="fas fa-info-circle me-2 text-primary"></i>
+                                        {{ log }}
+                                    </div>
+                                {% empty %}
+                                    <div class="text-center py-5 text-muted">
+                                        <i class="fas fa-inbox fa-3x mb-3 opacity-50"></i>
+                                        <h5>No transactions yet</h5>
+                                        <p>Execute a transaction or demo above to see the 2-Phase Commit in action</p>
+                                    </div>
+                                {% endfor %}
                             </div>
-                            <small class="text-center d-block mt-1" id="progressText">0%</small>
-                        </div>
-                        
-                        <!-- Demo Controls -->
-                        <div class="mt-3">
-                            <button class="btn btn-sm btn-outline-danger" id="killNodeBtn">
-                                <i class="fas fa-skull me-1"></i> Simulate Node Failure
-                            </button>
-                            <button class="btn btn-sm btn-outline-success" id="restartNodeBtn">
-                                <i class="fas fa-redo me-1"></i> Restart Nodes
-                            </button>
-                            <button class="btn btn-sm btn-outline-secondary" id="clearLogBtn">
-                                <i class="fas fa-trash me-1"></i> Clear Log
-                            </button>
                         </div>
                     </div>
+                    
+                    <!-- Footer -->
+                    <div class="card-footer text-center text-muted">
+                        <small>
+                            <i class="fas fa-university me-1"></i>
+                            ICS 2403: Distributed Computing & Applications | 
+                            <i class="fas fa-code me-1 ms-3"></i>
+                            Two-Phase Commit Implementation | 
+                            <i class="fas fa-shield-alt me-1 ms-3"></i>
+                            Fault Tolerance & Concurrency Control |
+                            <span class="ms-3">
+                                Active Nodes: <span id="activeNodeCount">0</span>
+                            </span>
+                        </small>
+                    </div>
                 </div>
-                
-                <!-- Transaction Log -->
-                <h5>Transaction Log</h5>
-                <div id="transactionLog" style="max-height: 300px; overflow-y: auto;">
-                    {% for log in logs %}
-                        <div class="log-item">
-                            <i class="fas fa-info-circle me-2"></i>
-                            {{ log }}
-                        </div>
-                    {% empty %}
-                        <div class="text-center text-muted py-3">
-                            <i class="fas fa-inbox fa-2x mb-2"></i>
-                            <p>No transactions yet. Start one above!</p>
-                        </div>
-                    {% endfor %}
-                </div>
-            </div>
-            
-            <div class="card-footer text-center text-muted">
-                <small>
-                    <i class="fas fa-code me-1"></i>
-                    Two-Phase Commit Implementation | 
-                    Active Nodes: <span id="activeNodeCount">0</span> |
-                    Total Balance: $<span id="totalBalance">2000</span>
-                </small>
             </div>
         </div>
     </div>
 
-    <!-- Font Awesome -->
-    <script src="https://kit.fontawesome.com/a076d05399.js"></script>
-    
-    <!-- Bootstrap JS -->
+    <!-- Notification Container -->
+    <div id="notificationContainer"></div>
+
+    <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     
-    <!-- JavaScript -->
+    <!-- Custom JavaScript -->
     <script>
         // Global variables
-        let txCount = 0;
-        let successCount = 0;
-        let failCount = 0;
-        let nodeStatus = {5001: false, 5002: false};
-        let nodeBalances = {5001: 1000, 5002: 1000};
+        let nodeStatus = {6001: false, 6002: false};
+        let nodeBalances = {6001: 1000, 6002: 1000};
+        let logCounter = 0;
         
-        // Initialize
+        // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {
             checkNodeStatus();
             updateBalances();
             updateStats();
             
-            // Auto-refresh every 5 seconds
+            // Auto-refresh
             setInterval(checkNodeStatus, 5000);
             setInterval(updateBalances, 3000);
+            
+            // Set up event listeners
+            setupEventListeners();
         });
         
-        // Check node status
+        function setupEventListeners() {
+            // Form submission
+            document.getElementById('transactionForm').addEventListener('submit', handleTransactionSubmit);
+            
+            // Demo forms
+            document.querySelectorAll('.concurrent-form, .failure-form').forEach(form => {
+                form.addEventListener('submit', handleDemoSubmit);
+            });
+            
+            // Node control forms
+            document.querySelectorAll('form[action*="crash_node"], form[action*="restart_node"]').forEach(form => {
+                form.addEventListener('submit', handleNodeControlSubmit);
+            });
+            
+            // Control buttons
+            document.getElementById('refreshAll').addEventListener('click', refreshAll);
+            document.getElementById('resetSystem').addEventListener('click', resetSystem);
+            document.getElementById('refreshBalances').addEventListener('click', updateBalances);
+            document.getElementById('clearLogBtn').addEventListener('click', clearLog);
+            
+            // Filter buttons
+            document.getElementById('filterAll').addEventListener('click', () => filterLogs('all'));
+            document.getElementById('filterCommitted').addEventListener('click', () => filterLogs('committed'));
+            document.getElementById('filterRolledBack').addEventListener('click', () => filterLogs('rolledback'));
+            document.getElementById('filterConcurrent').addEventListener('click', () => filterLogs('concurrent'));
+            
+            // Checkbox interactions
+            document.getElementById('largeAmount').addEventListener('change', function() {
+                const amountInput = document.getElementById('amount');
+                if (this.checked) {
+                    amountInput.value = '850';
+                    amountInput.min = '800';
+                    showNotification('Amount set to $850 to simulate timeout', 'warning');
+                } else {
+                    amountInput.value = '100';
+                    amountInput.min = '1';
+                }
+            });
+        }
+        
         async function checkNodeStatus() {
             const container = document.getElementById('node-status-container');
             let html = '';
             let activeCount = 0;
             
-            for (const port of [5001, 5002]) {
+            for (const port of [6001, 6002]) {
                 try {
                     const response = await fetch(`/check-node/${port}/`);
                     const data = await response.json();
@@ -214,17 +688,24 @@
                         activeCount++;
                         html += `
                             <div class="node-active">
-                                <i class="fas fa-check-circle text-success me-2"></i>
-                                <strong>Node ${port}:</strong> Active
-                                ${data.balance ? `| Balance: $${data.balance}` : ''}
+                                <span class="status-indicator bg-success"></span>
+                                <strong>Node ${port}:</strong> 
+                                <span class="text-success">Active</span>
+                                <span class="float-end">
+                                    <i class="fas fa-check-circle text-success"></i>
+                                </span>
                             </div>
                         `;
                     } else {
                         nodeStatus[port] = false;
                         html += `
                             <div class="node-inactive">
-                                <i class="fas fa-times-circle text-danger me-2"></i>
-                                <strong>Node ${port}:</strong> Inactive
+                                <span class="status-indicator bg-danger"></span>
+                                <strong>Node ${port}:</strong> 
+                                <span class="text-danger">Inactive</span>
+                                <span class="float-end">
+                                    <i class="fas fa-times-circle text-danger"></i>
+                                </span>
                             </div>
                         `;
                     }
@@ -232,8 +713,12 @@
                     nodeStatus[port] = false;
                     html += `
                         <div class="node-inactive">
-                            <i class="fas fa-exclamation-triangle text-danger me-2"></i>
-                            <strong>Node ${port}:</strong> Connection Failed
+                            <span class="status-indicator bg-danger"></span>
+                            <strong>Node ${port}:</strong> 
+                            <span class="text-danger">Connection Failed</span>
+                            <span class="float-end">
+                                <i class="fas fa-exclamation-triangle text-danger"></i>
+                            </span>
                         </div>
                     `;
                 }
@@ -242,12 +727,16 @@
             container.innerHTML = html;
             document.getElementById('activeNodeCount').textContent = activeCount;
             
-            // Update submit button
+            // Update submit button state
+            updateSubmitButtonState(activeCount);
+        }
+        
+        function updateSubmitButtonState(activeCount) {
             const submitBtn = document.getElementById('submitBtn');
             if (activeCount >= 2) {
                 submitBtn.disabled = false;
-                submitBtn.innerHTML = '<i class="fas fa-play me-2"></i> Start Transaction';
-                submitBtn.className = 'btn btn-primary w-100';
+                submitBtn.innerHTML = '<i class="fas fa-play me-2"></i> Execute TX';
+                submitBtn.className = 'btn btn-transaction w-100';
             } else {
                 submitBtn.disabled = true;
                 submitBtn.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i> Need 2 Active Nodes';
@@ -255,100 +744,108 @@
             }
         }
         
-        // Update balances
         async function updateBalances() {
             try {
                 const response = await fetch('/api/balances/');
                 const data = await response.json();
                 
-                if (data.nodes && Array.isArray(data.nodes)) {
-                    for (const node of data.nodes) {
-                        const port = node.port;
-                        const balance = node.balance || 1000;
+                if (data.balances) {
+                    for (const [port, balance] of Object.entries(data.balances)) {
+                        const portNum = parseInt(port);
+                        const oldBalance = nodeBalances[portNum] || 1000;
+                        nodeBalances[portNum] = balance;
                         
-                        // Store balance
-                        nodeBalances[port] = balance;
-                        
-                        // Update display
-                        const element = document.getElementById(`balance${port}`);
-                        const badge = document.getElementById(`badge${port}`);
-                        
-                        if (element && badge) {
-                            const oldText = element.textContent;
-                            const oldBalance = parseInt(oldText.replace('$', '')) || 1000;
-                            
-                            // Update balance
-                            element.textContent = `$${balance}`;
-                            
-                            // Update badge
-                            if (balance > 1000) {
-                                badge.className = 'badge bg-success';
-                                badge.textContent = 'Increased';
-                                element.className = 'text-success';
-                            } else if (balance < 1000) {
-                                badge.className = 'badge bg-danger';
-                                badge.textContent = 'Decreased';
-                                element.className = 'text-danger';
-                            } else {
-                                badge.className = 'badge bg-secondary';
-                                badge.textContent = 'Initial';
-                                element.className = 'text-primary';
-                            }
-                            
-                            // Add animation if balance changed
-                            if (oldBalance !== balance) {
-                                element.classList.add('balance-update');
-                                setTimeout(() => {
-                                    element.classList.remove('balance-update');
-                                }, 500);
-                            }
-                        }
+                        // Update balance displays
+                        updateBalanceDisplay(portNum, oldBalance, balance);
                     }
                     
                     // Update total balance
-                    const total = nodeBalances[5001] + nodeBalances[5002];
+                    const total = nodeBalances[6001] + nodeBalances[6002];
                     document.getElementById('totalBalance').textContent = total;
+                    
+                    // Update stats if available
+                    if (data.stats) {
+                        updateStatsDisplay(data.stats);
+                    }
                 }
             } catch (error) {
                 console.error('Error updating balances:', error);
             }
         }
         
-        // Update statistics
-        function updateStats() {
-            document.getElementById('tx-count').textContent = txCount;
-            document.getElementById('success-count').textContent = successCount;
-            document.getElementById('fail-count').textContent = failCount;
+        function updateBalanceDisplay(port, oldBalance, newBalance) {
+            const balanceElement = document.getElementById(`balance${port}`);
+            const badgeElement = document.getElementById(`badge${port}`);
+            const nodeBalanceElement = document.getElementById(`node${port === 6001 ? '1' : '2'}-balance`);
+            
+            if (balanceElement && badgeElement) {
+                // Update main balance display
+                balanceElement.textContent = `$${newBalance}`;
+                
+                // Update badge and color
+                if (newBalance > 1000) {
+                    badgeElement.className = 'badge bg-success';
+                    badgeElement.textContent = 'Increased';
+                    balanceElement.className = 'text-success mb-0';
+                } else if (newBalance < 1000) {
+                    badgeElement.className = 'badge bg-danger';
+                    badgeElement.textContent = 'Decreased';
+                    balanceElement.className = 'text-danger mb-0';
+                } else {
+                    badgeElement.className = 'badge bg-secondary';
+                    badgeElement.textContent = 'Initial';
+                    balanceElement.className = (port === 6001 ? 'text-primary' : 'text-success') + ' mb-0';
+                }
+                
+                // Update architecture diagram
+                if (nodeBalanceElement) {
+                    nodeBalanceElement.textContent = `$${newBalance}`;
+                }
+                
+                // Add animation if balance changed
+                if (oldBalance !== newBalance) {
+                    balanceElement.classList.add('balance-update');
+                    setTimeout(() => {
+                        balanceElement.classList.remove('balance-update');
+                    }, 500);
+                }
+            }
         }
         
-        // Handle form submission
-        document.getElementById('transactionForm').addEventListener('submit', async function(e) {
+        async function handleTransactionSubmit(e) {
             e.preventDefault();
             
-            const submitBtn = document.getElementById('submitBtn');
+            const form = e.target;
+            const submitBtn = form.querySelector('button[type="submit"]');
             const progressContainer = document.getElementById('progressContainer');
             const progressBar = document.getElementById('progressBar');
             const progressText = document.getElementById('progressText');
+            const phaseText = document.getElementById('phaseText');
             
             // Disable button and show progress
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Processing...';
             progressContainer.classList.remove('d-none');
             
-            // Animate progress bar
+            // Animate progress bar through 2PC phases
             let progress = 0;
             const interval = setInterval(() => {
-                progress += 10;
-                if (progress >= 100) {
-                    progress = 100;
+                if (progress < 50) {
+                    progress += 10;
+                    phaseText.textContent = "Phase 1: Preparing nodes...";
+                } else if (progress < 100) {
+                    progress += 10;
+                    phaseText.textContent = "Phase 2: Committing/Rolling back...";
+                } else {
                     clearInterval(interval);
+                    phaseText.textContent = "Transaction complete!";
                 }
                 progressBar.style.width = `${progress}%`;
                 progressText.textContent = `${progress}%`;
-            }, 200);
+            }, 300);
             
             // Submit form
-            const formData = new FormData(this);
+            const formData = new FormData(form);
             
             try {
                 const response = await fetch('', {
@@ -359,66 +856,142 @@
                     }
                 });
                 
-                if (response.headers.get('content-type').includes('application/json')) {
-                    const data = await response.json();
-                    
-                    if (data.status === 'success') {
-                        // Add logs to display
-                        data.logs.forEach(log => {
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    // Add logs to display
+                    data.logs.forEach((log, index) => {
+                        setTimeout(() => {
                             addLog(log);
-                        });
-                        
-                        // Update stats
-                        txCount++;
-                        if (data.logs.some(log => log.includes('COMMITTED'))) {
-                            successCount++;
-                        } else {
-                            failCount++;
-                        }
-                    }
-                } else {
-                    // Handle HTML response
-                    const html = await response.text();
-                    const tempDiv = document.createElement('div');
-                    tempDiv.innerHTML = html;
-                    
-                    // Extract logs from the HTML
-                    const logElements = tempDiv.querySelectorAll('.log-item');
-                    logElements.forEach(log => {
-                        addLog(log.textContent.trim());
+                        }, index * 100);
                     });
                     
-                    txCount++;
-                    if (html.includes('COMMITTED')) {
-                        successCount++;
-                    } else {
-                        failCount++;
+                    // Update balances
+                    if (data.balances) {
+                        nodeBalances = data.balances;
+                        updateBalanceDisplay(6001, 0, data.balances[6001]);
+                        updateBalanceDisplay(6002, 0, data.balances[6002]);
                     }
+                    
+                    // Update stats
+                    if (data.stats) {
+                        updateStatsDisplay(data.stats);
+                    }
+                    
+                    showNotification('Transaction completed successfully!', 'success');
                 }
-                
-                // Update balances after transaction
-                setTimeout(updateBalances, 1000);
-                
             } catch (error) {
                 addLog(`Error: ${error.message}`, 'error');
-                txCount++;
-                failCount++;
+                showNotification('Transaction failed!', 'danger');
+            } finally {
+                // Reset UI
+                setTimeout(() => {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fas fa-play me-2"></i> Execute TX';
+                    progressContainer.classList.add('d-none');
+                    progressBar.style.width = '0%';
+                    progressText.textContent = '0%';
+                    phaseText.textContent = 'Initializing transaction...';
+                    
+                    // Refresh status
+                    checkNodeStatus();
+                    updateBalances();
+                }, 1000);
             }
-            
-            // Reset UI
-            setTimeout(() => {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = '<i class="fas fa-play me-2"></i> Start Transaction';
-                submitBtn.className = 'btn btn-primary w-100';
-                progressContainer.classList.add('d-none');
-                progressBar.style.width = '0%';
-                progressText.textContent = '0%';
-                updateStats();
-                checkNodeStatus();
-            }, 2000);
-        });
+        }
         
-        // Add log entry
+        async function handleDemoSubmit(e) {
+            e.preventDefault();
+            
+            const form = e.target;
+            const button = form.querySelector('button[type="submit"]');
+            const originalText = button.innerHTML;
+            
+            button.disabled = true;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Running...';
+            
+            try {
+                const formData = new FormData(form);
+                const response = await fetch('', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    // Clear existing logs for demos
+                    if (formData.get('action') === 'failure_demo') {
+                        clearLog();
+                    }
+                    
+                    // Add logs
+                    data.logs.forEach((log, index) => {
+                        setTimeout(() => {
+                            addLog(log);
+                        }, index * 50);
+                    });
+                    
+                    // Update stats and balances
+                    if (data.stats) updateStatsDisplay(data.stats);
+                    if (data.balances) {
+                        nodeBalances = data.balances;
+                        updateBalanceDisplay(6001, 0, data.balances[6001]);
+                        updateBalanceDisplay(6002, 0, data.balances[6002]);
+                    }
+                    
+                    showNotification('Demo completed successfully!', 'success');
+                }
+            } catch (error) {
+                addLog(`Error running demo: ${error.message}`, 'error');
+                showNotification('Demo failed!', 'danger');
+            } finally {
+                button.disabled = false;
+                button.innerHTML = originalText;
+                updateBalances();
+            }
+        }
+        
+        async function handleNodeControlSubmit(e) {
+            e.preventDefault();
+            
+            const form = e.target;
+            const button = form.querySelector('button[type="submit"]');
+            const originalText = button.innerHTML;
+            
+            button.disabled = true;
+            
+            try {
+                const formData = new FormData(form);
+                const response = await fetch('', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    addLog(data.message || 'Node control action executed', 'info');
+                    showNotification('Node control executed!', 'info');
+                    
+                    // Update node status
+                    setTimeout(checkNodeStatus, 1000);
+                }
+            } catch (error) {
+                addLog(`Error: ${error.message}`, 'error');
+                showNotification('Action failed!', 'danger');
+            } finally {
+                button.disabled = false;
+                button.innerHTML = originalText;
+            }
+        }
+        
         function addLog(message, type = 'info') {
             const logContainer = document.getElementById('transactionLog');
             
@@ -431,95 +1004,175 @@
             // Create log item
             const logItem = document.createElement('div');
             logItem.className = 'log-item';
+            logItem.dataset.type = type;
             
             // Determine icon and color
             let icon = 'fa-info-circle';
-            if (type === 'error' || message.includes('ABORTED') || message.includes('ROLLBACK') || message.includes('Error')) {
+            let textColor = 'text-primary';
+            
+            if (type === 'error' || message.includes('✗') || message.includes('ROLLED BACK') || message.includes('Error')) {
                 logItem.classList.add('log-error');
                 icon = 'fa-times-circle';
-            } else if (message.includes('COMMITTED') || message.includes('READY')) {
+                textColor = 'text-danger';
+            } else if (type === 'success' || message.includes('✓') || message.includes('COMMITTED')) {
                 logItem.classList.add('log-success');
                 icon = 'fa-check-circle';
-            } else if (message.includes('PREPARED') || message.includes('starting')) {
+                textColor = 'text-success';
+            } else if (message.includes('PREPARE') || message.includes('DECISION') || message.includes('Phase')) {
                 logItem.classList.add('log-warning');
                 icon = 'fa-sync-alt';
+                textColor = 'text-warning';
+            } else if (message.includes('CONCURRENT') || message.includes('Worker')) {
+                logItem.classList.add('log-info');
+                icon = 'fa-users';
+                textColor = 'text-info';
             }
             
+            // Highlight transaction IDs and amounts
+            let formattedMessage = message;
+            formattedMessage = formattedMessage.replace(/(TX\d{3})/g, '<span class="highlight">$1</span>');
+            formattedMessage = formattedMessage.replace(/(\$\d+)/g, '<span class="highlight">$1</span>');
+            
             logItem.innerHTML = `
-                <i class="fas ${icon} me-2"></i>
-                ${message}
-                <small class="float-end text-muted">${new Date().toLocaleTimeString()}</small>
+                <i class="fas ${icon} me-2 ${textColor}"></i>
+                ${formattedMessage}
+                <small class="float-end text-muted">${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'})}</small>
             `;
             
             // Add to top
             logContainer.insertBefore(logItem, logContainer.firstChild);
+            
+            // Update log count
+            logCounter++;
+            document.getElementById('logCount').textContent = logCounter;
+            
+            // Auto-scroll to top
+            logContainer.scrollTop = 0;
         }
         
-        // Button event handlers
-        document.getElementById('refreshBalances').addEventListener('click', updateBalances);
+        function updateStatsDisplay(stats) {
+            document.getElementById('stat-total').textContent = stats.total || 0;
+            document.getElementById('stat-committed').textContent = stats.committed || 0;
+            document.getElementById('stat-rolled-back').textContent = stats.rolled_back || 0;
+            document.getElementById('stat-success-rate').textContent = 
+                stats.success_rate ? `${Math.round(stats.success_rate)}%` : '0%';
+        }
         
-        document.getElementById('resetBalances').addEventListener('click', async function() {
-            const btn = this;
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Resetting...';
+        function filterLogs(filter) {
+            const logItems = document.querySelectorAll('#transactionLog .log-item');
+            const filterButtons = document.querySelectorAll('#filterAll, #filterCommitted, #filterRolledBack, #filterConcurrent');
             
-            try {
-                const response = await fetch('/api/reset-balances/', {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                    }
-                });
-                const data = await response.json();
-                addLog('Balances reset to $1000', 'info');
-                setTimeout(updateBalances, 500);
-            } catch (error) {
-                addLog('Error resetting balances', 'error');
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-undo me-1"></i> Reset to $1000';
-            }
-        });
-        
-        document.getElementById('killNodeBtn').addEventListener('click', async function() {
-            const btn = this;
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Simulating...';
+            // Update active button
+            filterButtons.forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`filter${filter.charAt(0).toUpperCase() + filter.slice(1)}`).classList.add('active');
             
-            try {
-                const response = await fetch('/api/simulate-failure/', {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                    }
-                });
-                const data = await response.json();
-                addLog(`Simulated failure: ${data.message}`, 'error');
-            } catch (error) {
-                addLog('Error simulating failure', 'error');
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-skull me-1"></i> Simulate Node Failure';
-            }
-        });
+            // Filter logs
+            logItems.forEach(item => {
+                const type = item.dataset.type || 'info';
+                const text = item.textContent || '';
+                
+                let show = false;
+                switch(filter) {
+                    case 'all':
+                        show = true;
+                        break;
+                    case 'committed':
+                        show = text.includes('COMMITTED') || type === 'success';
+                        break;
+                    case 'rolledback':
+                        show = text.includes('ROLLED BACK') || type === 'error';
+                        break;
+                    case 'concurrent':
+                        show = text.includes('CONCURRENT') || text.includes('Worker');
+                        break;
+                }
+                
+                item.style.display = show ? 'block' : 'none';
+            });
+        }
         
-        document.getElementById('restartNodeBtn').addEventListener('click', function() {
-            addLog('Simulating node restart...', 'warning');
-            setTimeout(() => {
-                addLog('All nodes restarted successfully', 'success');
-                checkNodeStatus();
-                updateBalances();
-            }, 1000);
-        });
-        
-        document.getElementById('clearLogBtn').addEventListener('click', function() {
-            document.getElementById('transactionLog').innerHTML = `
-                <div class="text-center text-muted py-3">
-                    <i class="fas fa-inbox fa-2x mb-2"></i>
-                    <p>No transactions yet. Start one above!</p>
+        function clearLog() {
+            const logContainer = document.getElementById('transactionLog');
+            logContainer.innerHTML = `
+                <div class="text-center py-5 text-muted">
+                    <i class="fas fa-inbox fa-3x mb-3 opacity-50"></i>
+                    <h5>Log cleared</h5>
+                    <p>Execute a transaction or demo above to see the 2-Phase Commit in action</p>
                 </div>
             `;
-        });
+            logCounter = 0;
+            document.getElementById('logCount').textContent = '0';
+        }
+        
+        async function refreshAll() {
+            await checkNodeStatus();
+            await updateBalances();
+            showNotification('All data refreshed!', 'info');
+        }
+        
+        async function resetSystem() {
+            if (confirm('Are you sure you want to reset the system? This will clear all statistics.')) {
+                try {
+                    const response = await fetch('/reset/', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+                    
+                    const data = await response.json();
+                    if (data.status === 'success') {
+                        showNotification('System reset successful!', 'success');
+                        updateStatsDisplay({total: 0, committed: 0, rolled_back: 0, success_rate: 0});
+                        clearLog();
+                    }
+                } catch (error) {
+                    showNotification('Reset failed: ' + error.message, 'danger');
+                }
+            }
+        }
+        
+        function updateStats() {
+            // Initial stats display
+            updateStatsDisplay({
+                total: {{ stats.total|default:0 }},
+                committed: {{ stats.committed|default:0 }},
+                rolled_back: {{ stats.rolled_back|default:0 }},
+                success_rate: {{ stats.success_rate|default:0 }}
+            });
+            
+            // Initial balances
+            nodeBalances = {
+                6001: {{ balances.6001|default:1000 }},
+                6002: {{ balances.6002|default:1000 }}
+            };
+            
+            updateBalanceDisplay(6001, 0, nodeBalances[6001]);
+            updateBalanceDisplay(6002, 0, nodeBalances[6002]);
+            
+            // Initial log count
+            logCounter = {{ logs|length|default:0 }};
+            document.getElementById('logCount').textContent = logCounter;
+        }
+        
+        function showNotification(message, type = 'info') {
+            const container = document.getElementById('notificationContainer');
+            const notification = document.createElement('div');
+            notification.className = `notification alert alert-${type} alert-dismissible fade show`;
+            notification.innerHTML = `
+                <strong>${type === 'success' ? '✓' : type === 'danger' ? '✗' : 'ℹ'} </strong>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            container.appendChild(notification);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                notification.remove();
+            }, 5000);
+        }
     </script>
 </body>
 </html>
