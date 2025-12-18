@@ -1,0 +1,35 @@
+/* Additional custom styles can go here */
+
+/* Transaction animation */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.transaction-pulse {
+    animation: pulse 0.5s ease-in-out;
+}
+
+/* Node status animation */
+@keyframes nodePulse {
+    0% { opacity: 0.7; }
+    50% { opacity: 1; }
+    100% { opacity: 0.7; }
+}
+
+.node-connecting {
+    animation: nodePulse 1.5s infinite;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .card {
+        background-color: #2d3748 !important;
+        color: #e2e8f0 !important;
+    }
+    
+    .transaction-form {
+        background-color: #4a5568 !important;
+    }
+}
